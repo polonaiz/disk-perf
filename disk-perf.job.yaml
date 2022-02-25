@@ -1,0 +1,43 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: disk-perf-job
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: main
+          image: ubuntu
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "/data/app/disk-perf/run.sh"]
+          volumeMounts:
+            - name: volume-app
+              mountPath: /data/app/disk-perf
+            - name: volume-empty-dir
+              mountPath: /mnt/empty-dir
+            - name: volume-empty-dir-mem
+              mountPath: /mnt/empty-dir-mem
+            - name: volume-host-path-dir-ssd
+              mountPath: /mnt/host-path-dir-ssd
+            - name: volume-host-path-dir-nvme
+              mountPath: /mnt/host-path-dir-nvme
+          volumeDevices:
+            - name: volume-nvme-block
+              devicePath: /dev/nvme
+      volumes:
+        - name: volume-app
+          hostPath: { path: /data/app/disk-perf }
+        - name: volume-empty-dir
+          emptyDir: { medium: "" }
+        - name: volume-empty-dir-mem
+          emptyDir: { medium: Memory }
+        - name: volume-host-path-dir-ssd
+          hostPath: { type: Directory, path: /data/lib/disk-perf }
+        - name: volume-host-path-dir-nvme
+          hostPath: { type: Directory, path: /mnt/nvme-p1 }
+        - name: volume-nvme-block
+          persistentVolumeClaim:
+            claimName: local-nvme-block-pvc
+---
